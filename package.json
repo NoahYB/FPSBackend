@@ -1,0 +1,36 @@
+{
+  "name": "back_e",
+  "version": "1.0.0",
+  "description": "",
+  "main": "FPSBackend.js",
+  "dependencies": {
+    "@types/ws": "^8.5.3",
+    "express": "^4.17.1",
+    "http": "^0.0.1-security",
+    "matter-js": "^0.17.1",
+    "three": "^0.146.0",
+    "three-stdlib": "^2.19.0",
+    "ws": "^7.4.6"
+  },
+  "compilerOptions": {
+    "outDir": "build"
+  },
+  "devDependencies": {
+    "typescript": "^4.9.3"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc --build",
+    "start":  "node ./build/FPSBackend.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NoahYB/mousey.git"
+  },
+  "author": "Noah B",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NoahYB/mousey/issues"
+  },
+  "homepage": "https://github.com/NoahYB/mousey#readme"
+}
