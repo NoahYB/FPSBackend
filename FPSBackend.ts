@@ -1,5 +1,5 @@
 import { CharacterController } from './CharacterController';
-import { ClientData } from './types/ClientData';
+import { ClientData, VictoryMessage } from './types/ClientData';
 import { ClientMap } from './types/GeneralTypes';
 
 const WebSocketModule = require('ws');
@@ -33,7 +33,13 @@ wss.on('connection', function connection(ws) {
                 console.log('close', e);
         });
         
-        ws.send(JSON.stringify(connectedClients));
+        ws.send(JSON.stringify(
+                {
+                        senderId: 'WEBSOCKET_SERVER_GAME_INIT',
+                        connectedClients,
+                        gameData,
+                }
+        ));
 });
 
 function receiveMessage(message:string) {
@@ -42,9 +48,9 @@ function receiveMessage(message:string) {
         let data : ClientData = m.data;
 
         if (!connectedClients[data.senderId]) {
+                data.inTeamSelect = true;
                 connectedClients[data.senderId] = {
                         clientData: data,
-                        clientController: new CharacterController()
                 }
         }
 
@@ -67,6 +73,9 @@ function receiveMessage(message:string) {
         if (data.action === "HIT") {
                 handleHit(data);
         }
+        if (data.action === "NAME_CHANGE") {
+                handleNameChange(data);
+        }
 
 }
 
@@ -84,14 +93,33 @@ function handleShot(clientData: ClientData) {
 }
 
 function handleKillConfirm(clientData: ClientData) {
-        const teamString = clientData
-                .team === 1 ? 'team1' : 'team2';
-        gameData.scores[teamString] += 1;
-        gameData.pointAwardedTo = clientData.senderId;
+        gameData.scores[clientData.team] += 1;
+        
+        gameData.pointAwardedTo = clientData.pointAwardedTo;
+
+        connectedClients[clientData.pointAwardedTo].clientData.score += 1;
+
+        let gameWinner = undefined;
+
+        if (gameData.scores.team1 >= 25) {
+                gameWinner = 'team1';
+        }
+
+        if (gameData.scores.team2 >= 25) {
+                gameWinner = 'team2'
+        }
+
+        if (gameWinner !== undefined) {
+                const victoryMessage: VictoryMessage = {
+                        winner: gameWinner,
+                        specialMessage: 'Noah Wins!',
+                }
+        }
+
         wss.clients.forEach(client => {
                 client.send(JSON.stringify(gameData))
         });
-}
+}2
 
 function handleTeamSelect(clientData: ClientData) {
         if (connectedClients[clientData.senderId]
@@ -105,6 +133,10 @@ function handleTeamSelect(clientData: ClientData) {
         connectedClients[clientData.senderId]
                 .clientData
                 .score = 0;
+        connectedClients[clientData.senderId]
+                .clientData
+                .inTeamSelect = false;
+        clientData.inTeamSelect = false;
         clientData.score = 0;
         wss.clients.forEach(client => {
                 client.send(JSON.stringify(clientData))
@@ -112,12 +144,17 @@ function handleTeamSelect(clientData: ClientData) {
 }
 
 function handleMouseUpdate(clientData: ClientData) {
-        connectedClients[clientData.senderId]
-                .clientController
-                .pointerLockControls
-                .onMouseMove(clientData.mouseData);
         wss.clients.forEach(client => {
                 client.send(JSON.stringify(client))
+        });
+}
+
+function handleNameChange(clientData: ClientData) {
+        connectedClients[clientData.senderId]
+                .clientData
+                .connectionDisplayName = clientData.connectionDisplayName;
+        wss.clients.forEach(client => {
+                client.send(JSON.stringify(clientData))
         });
 }
 
@@ -125,6 +162,9 @@ function handleMovementUpdate(clientData: ClientData) {
         // connectedClients[clientData.senderId]
         //         .clientController
         //         .update(clientData)
+        connectedClients[clientData.senderId]
+                .clientData
+                .position = clientData.position;
         wss.clients.forEach(client => {
                 client.send(JSON.stringify(clientData))
         });

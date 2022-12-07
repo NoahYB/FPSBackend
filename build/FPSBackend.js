@@ -1,6 +1,5 @@
 "use strict";
 exports.__esModule = true;
-var CharacterController_1 = require("./CharacterController");
 var WebSocketModule = require('ws');
 var wss = new WebSocketModule.Server({ port: 56112, clientTracking: true });
 var connectedClients = {};
@@ -24,15 +23,19 @@ wss.on('connection', function connection(ws) {
     ws.on('close', function (e) {
         console.log('close', e);
     });
-    ws.send(JSON.stringify(connectedClients));
+    ws.send(JSON.stringify({
+        senderId: 'WEBSOCKET_SERVER_GAME_INIT',
+        connectedClients: connectedClients,
+        gameData: gameData
+    }));
 });
 function receiveMessage(message) {
     var m = JSON.parse(message);
     var data = m.data;
     if (!connectedClients[data.senderId]) {
+        data.inTeamSelect = true;
         connectedClients[data.senderId] = {
-            clientData: data,
-            clientController: new CharacterController_1.CharacterController()
+            clientData: data
         };
     }
     if (data.action === "CONFIRM_KILL") {
@@ -50,6 +53,9 @@ function receiveMessage(message) {
     if (data.action === "HIT") {
         handleHit(data);
     }
+    if (data.action === "NAME_CHANGE") {
+        handleNameChange(data);
+    }
 }
 function handleHit(clientData) {
     wss.clients.forEach(function (client) {
@@ -63,14 +69,27 @@ function handleShot(clientData) {
     });
 }
 function handleKillConfirm(clientData) {
-    var teamString = clientData
-        .team === 1 ? 'team1' : 'team2';
-    gameData.scores[teamString] += 1;
-    gameData.pointAwardedTo = clientData.senderId;
+    gameData.scores[clientData.team] += 1;
+    gameData.pointAwardedTo = clientData.pointAwardedTo;
+    connectedClients[clientData.pointAwardedTo].clientData.score += 1;
+    var gameWinner = undefined;
+    if (gameData.scores.team1 >= 25) {
+        gameWinner = 'team1';
+    }
+    if (gameData.scores.team2 >= 25) {
+        gameWinner = 'team2';
+    }
+    if (gameWinner !== undefined) {
+        var victoryMessage = {
+            winner: gameWinner,
+            specialMessage: 'Noah Wins!'
+        };
+    }
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(gameData));
     });
 }
+2;
 function handleTeamSelect(clientData) {
     if (connectedClients[clientData.senderId]
         .clientData
@@ -84,24 +103,35 @@ function handleTeamSelect(clientData) {
     connectedClients[clientData.senderId]
         .clientData
         .score = 0;
+    connectedClients[clientData.senderId]
+        .clientData
+        .inTeamSelect = false;
+    clientData.inTeamSelect = false;
     clientData.score = 0;
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(clientData));
     });
 }
 function handleMouseUpdate(clientData) {
-    connectedClients[clientData.senderId]
-        .clientController
-        .pointerLockControls
-        .onMouseMove(clientData.mouseData);
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(client));
+    });
+}
+function handleNameChange(clientData) {
+    connectedClients[clientData.senderId]
+        .clientData
+        .connectionDisplayName = clientData.connectionDisplayName;
+    wss.clients.forEach(function (client) {
+        client.send(JSON.stringify(clientData));
     });
 }
 function handleMovementUpdate(clientData) {
     // connectedClients[clientData.senderId]
     //         .clientController
     //         .update(clientData)
+    connectedClients[clientData.senderId]
+        .clientData
+        .position = clientData.position;
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(clientData));
     });
