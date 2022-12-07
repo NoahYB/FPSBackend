@@ -9,7 +9,8 @@ var gameData = {
         team1: 0,
         team2: 0
     },
-    action: 'UPDATE_TEAM_SCORES'
+    action: 'UPDATE_TEAM_SCORES',
+    pointAwardedTo: 0
 };
 wss.on('request', function (request) {
     var connection = request.accept('echo-protocol', request.origin);
@@ -65,14 +66,25 @@ function handleKillConfirm(clientData) {
     var teamString = clientData
         .team === 1 ? 'team1' : 'team2';
     gameData.scores[teamString] += 1;
+    gameData.pointAwardedTo = clientData.senderId;
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(gameData));
     });
 }
 function handleTeamSelect(clientData) {
+    if (connectedClients[clientData.senderId]
+        .clientData
+        .team === clientData.team) {
+        return;
+    }
+    ;
     connectedClients[clientData.senderId]
         .clientData
         .team = clientData.team;
+    connectedClients[clientData.senderId]
+        .clientData
+        .score = 0;
+    clientData.score = 0;
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(clientData));
     });

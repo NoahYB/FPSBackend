@@ -15,6 +15,8 @@ export interface ClientData {
     timeStamp: number;
     lookQuaternion: Quaternion;
     direction?: Vector3;
+    score: number;
+    connectionDisplayName: string;
 }
 
 export interface Control {
