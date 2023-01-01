@@ -1,5 +1,5 @@
 import { CharacterController } from './CharacterController';
-import { ClientData, VictoryMessage } from './types/ClientData';
+import { ClientData, NewGameMessage, VictoryMessage } from './types/ClientData';
 import { ClientMap } from './types/GeneralTypes';
 
 const WebSocketModule = require('ws');
@@ -7,6 +7,8 @@ const WebSocketModule = require('ws');
 const wss = new WebSocketModule.Server({ port:56112, clientTracking: true});
 
 let connectedClients: ClientMap = {};
+
+const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
 
 let gameData = {
         scores: {
@@ -101,25 +103,58 @@ function handleKillConfirm(clientData: ClientData) {
 
         let gameWinner = undefined;
 
-        if (gameData.scores.team1 >= 25) {
+        if (gameData.scores.team1 >= 5) {
                 gameWinner = 'team1';
         }
 
-        if (gameData.scores.team2 >= 25) {
+        if (gameData.scores.team2 >= 5) {
                 gameWinner = 'team2'
         }
 
         if (gameWinner !== undefined) {
+                const topScorerKey = Object.keys(connectedClients).reduce((pKey, cKey) => {
+                        return connectedClients[cKey].score > connectedClients[pKey].score ? cKey : pKey;
+                })
+                const topScorer = connectedClients[topScorerKey].connectionDisplayName;
+                gameData.scores = {
+                        team1: 0,
+                        team2: 0,
+                }
                 const victoryMessage: VictoryMessage = {
                         winner: gameWinner,
+                        action: 'GAME_OVER',
                         specialMessage: 'Noah Wins!',
+                        gameData: {
+                                scores: {
+                                        team1: 0,
+                                        team2: 0,
+                                }
+                        },
+                        timeTillNextMatch: 10,
+                        topScorer,
                 }
+                wss.clients.forEach(client => {
+                        client.send(JSON.stringify(victoryMessage  ))
+                });
+                setTimeout(handleNewGame, 10000);
         }
 
         wss.clients.forEach(client => {
                 client.send(JSON.stringify(gameData))
         });
 }2
+
+function handleNewGame() {
+        Object.keys(connectedClients).map((key) => {
+                connectedClients[key].score = 0;
+        });
+        const message: NewGameMessage = {
+                action: 'START_NEW_GAME',
+        }
+        wss.clients.forEach(client => {
+                client.send(JSON.stringify(message))
+        });
+}
 
 function handleTeamSelect(clientData: ClientData) {
         if (connectedClients[clientData.senderId]

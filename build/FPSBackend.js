@@ -3,6 +3,7 @@ exports.__esModule = true;
 var WebSocketModule = require('ws');
 var wss = new WebSocketModule.Server({ port: 56112, clientTracking: true });
 var connectedClients = {};
+var sleep = function (waitTimeInMs) { return new Promise(function (resolve) { return setTimeout(resolve, waitTimeInMs); }); };
 var gameData = {
     scores: {
         team1: 0,
@@ -73,23 +74,55 @@ function handleKillConfirm(clientData) {
     gameData.pointAwardedTo = clientData.pointAwardedTo;
     connectedClients[clientData.pointAwardedTo].clientData.score += 1;
     var gameWinner = undefined;
-    if (gameData.scores.team1 >= 25) {
+    if (gameData.scores.team1 >= 5) {
         gameWinner = 'team1';
     }
-    if (gameData.scores.team2 >= 25) {
+    if (gameData.scores.team2 >= 5) {
         gameWinner = 'team2';
     }
     if (gameWinner !== undefined) {
-        var victoryMessage = {
-            winner: gameWinner,
-            specialMessage: 'Noah Wins!'
+        var topScorerKey = Object.keys(connectedClients).reduce(function (pKey, cKey) {
+            return connectedClients[cKey].score > connectedClients[pKey].score ? cKey : pKey;
+        });
+        var topScorer = connectedClients[topScorerKey].connectionDisplayName;
+        gameData.scores = {
+            team1: 0,
+            team2: 0
         };
+        var victoryMessage_1 = {
+            winner: gameWinner,
+            action: 'GAME_OVER',
+            specialMessage: 'Noah Wins!',
+            gameData: {
+                scores: {
+                    team1: 0,
+                    team2: 0
+                }
+            },
+            timeTillNextMatch: 10,
+            topScorer: topScorer
+        };
+        wss.clients.forEach(function (client) {
+            client.send(JSON.stringify(victoryMessage_1));
+        });
+        setTimeout(handleNewGame, 10000);
     }
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(gameData));
     });
 }
 2;
+function handleNewGame() {
+    Object.keys(connectedClients).map(function (key) {
+        connectedClients[key].score = 0;
+    });
+    var message = {
+        action: 'START_NEW_GAME'
+    };
+    wss.clients.forEach(function (client) {
+        client.send(JSON.stringify(message));
+    });
+}
 function handleTeamSelect(clientData) {
     if (connectedClients[clientData.senderId]
         .clientData

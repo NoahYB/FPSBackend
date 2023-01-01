@@ -21,9 +21,23 @@ export interface ClientData {
     inTeamSelect: boolean;
 }
 
+export interface NewGameMessage {
+    action: 'START_NEW_GAME';
+}
+
+
 export interface VictoryMessage {
     winner: 'team1' | 'team2';
     specialMessage: 'Noah Wins!';
+    action: 'GAME_OVER';
+    gameData: {
+        scores: {
+            team1: number,
+            team2: number,
+        },
+    };
+    timeTillNextMatch: 10;
+    topScorer: string;
 }
 
 export interface Control {
