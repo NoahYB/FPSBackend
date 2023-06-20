@@ -2,7 +2,7 @@
 import { Vector3, Quaternion } from 'three';
 
 export interface ClientData {
-    action: 'TEAM_SELECT' | 'MOVEMENT' | 'MOUSE' |'CONFIRM_KILL' | 'SHOT' | 'HIT' | 'NAME_CHANGE';
+    action: 'TEAM_SELECT' | 'MOVEMENT' | 'MOUSE' |'CONFIRM_KILL' | 'SHOT' | 'HIT' | 'NAME_CHANGE' | 'PROJECTILE_DATA' | 'ITEM_PICKUP';
     mouseData: MouseEvent;
     connected: boolean;
     input: KeyboardEvent['key'];

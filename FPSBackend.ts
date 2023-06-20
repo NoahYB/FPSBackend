@@ -10,6 +10,25 @@ let connectedClients: ClientMap = {};
 
 const sleep = (waitTimeInMs) => new Promise(resolve => setTimeout(resolve, waitTimeInMs));
 
+let itemData = {
+        items: {
+                1 : {
+                        id: 1,
+                        type: 'ROCKET',
+                        state: 'INTERACTABLE',
+                        heldBy: 0,
+                        position: [0,0,0]
+                },
+                2 : {
+                        id: 2,
+                        type: 'ROCKET',
+                        state: 'INTERACTABLE',
+                        heldBy: 0,
+                        position: [0,0,10]
+                }
+        }
+}
+
 let gameData = {
         scores: {
                 team1: 0,
@@ -17,6 +36,7 @@ let gameData = {
         },
         action: 'UPDATE_TEAM_SCORES',
         pointAwardedTo: 0,
+        itemData,
 }
 wss.on('request', function(request) {
         var connection = request.accept('echo-protocol', request.origin);
@@ -68,6 +88,14 @@ function receiveMessage(message:string) {
                 handleShot(data);
         }
 
+        if (data.action === "PROJECTILE_DATA") {
+                handleProjectileData(data);
+        }
+
+        if (data.action === "ITEM_PICKUP") {
+                handleItemPickup(data);
+        }
+
         if (data.action === "MOVEMENT") {
                 handleMovementUpdate(data);
         }
@@ -89,6 +117,19 @@ function handleHit(clientData: ClientData) {
 
 function handleShot(clientData: ClientData) {
         const direction = clientData.direction;
+        wss.clients.forEach(client => {
+                client.send(JSON.stringify(clientData))
+        });
+}
+
+function handleProjectileData(clientData: ClientData) {
+        const direction = clientData.direction;
+        wss.clients.forEach(client => {
+                client.send(JSON.stringify(clientData))
+        });
+}
+
+function handleItemPickup(clientData: ClientData) {
         wss.clients.forEach(client => {
                 client.send(JSON.stringify(clientData))
         });

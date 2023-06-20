@@ -4,13 +4,32 @@ var WebSocketModule = require('ws');
 var wss = new WebSocketModule.Server({ port: 56112, clientTracking: true });
 var connectedClients = {};
 var sleep = function (waitTimeInMs) { return new Promise(function (resolve) { return setTimeout(resolve, waitTimeInMs); }); };
+var itemData = {
+    items: {
+        1: {
+            id: 1,
+            type: 'ROCKET',
+            state: 'INTERACTABLE',
+            heldBy: 0,
+            position: [0, 0, 0]
+        },
+        2: {
+            id: 2,
+            type: 'ROCKET',
+            state: 'INTERACTABLE',
+            heldBy: 0,
+            position: [0, 0, 10]
+        }
+    }
+};
 var gameData = {
     scores: {
         team1: 0,
         team2: 0
     },
     action: 'UPDATE_TEAM_SCORES',
-    pointAwardedTo: 0
+    pointAwardedTo: 0,
+    itemData: itemData
 };
 wss.on('request', function (request) {
     var connection = request.accept('echo-protocol', request.origin);
@@ -48,6 +67,12 @@ function receiveMessage(message) {
     if (data.action === "SHOT") {
         handleShot(data);
     }
+    if (data.action === "PROJECTILE_DATA") {
+        handleProjectileData(data);
+    }
+    if (data.action === "ITEM_PICKUP") {
+        handleItemPickup(data);
+    }
     if (data.action === "MOVEMENT") {
         handleMovementUpdate(data);
     }
@@ -65,6 +90,17 @@ function handleHit(clientData) {
 }
 function handleShot(clientData) {
     var direction = clientData.direction;
+    wss.clients.forEach(function (client) {
+        client.send(JSON.stringify(clientData));
+    });
+}
+function handleProjectileData(clientData) {
+    var direction = clientData.direction;
+    wss.clients.forEach(function (client) {
+        client.send(JSON.stringify(clientData));
+    });
+}
+function handleItemPickup(clientData) {
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(clientData));
     });
