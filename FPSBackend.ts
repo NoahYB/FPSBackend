@@ -21,7 +21,7 @@ let itemData = {
                 },
                 2 : {
                         id: 2,
-                        type: 'ROCKET',
+                        type: 'PISTOL',
                         state: 'INTERACTABLE',
                         heldBy: 0,
                         position: [0,0,10]
@@ -130,6 +130,7 @@ function handleProjectileData(clientData: ClientData) {
 }
 
 function handleItemPickup(clientData: ClientData) {
+        gameData.itemData.items[clientData.itemId].heldBy = clientData.senderId;
         wss.clients.forEach(client => {
                 client.send(JSON.stringify(clientData))
         });
@@ -144,11 +145,11 @@ function handleKillConfirm(clientData: ClientData) {
 
         let gameWinner = undefined;
 
-        if (gameData.scores.team1 >= 5) {
+        if (gameData.scores.team1 >= 10) {
                 gameWinner = 'team1';
         }
 
-        if (gameData.scores.team2 >= 5) {
+        if (gameData.scores.team2 >= 10) {
                 gameWinner = 'team2'
         }
 
@@ -189,6 +190,8 @@ function handleNewGame() {
         Object.keys(connectedClients).map((key) => {
                 connectedClients[key].score = 0;
         });
+        gameData.scores.team1 = 0;
+        gameData.scores.team2 = 0;
         const message: NewGameMessage = {
                 action: 'START_NEW_GAME',
         }

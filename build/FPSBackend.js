@@ -15,7 +15,7 @@ var itemData = {
         },
         2: {
             id: 2,
-            type: 'ROCKET',
+            type: 'PISTOL',
             state: 'INTERACTABLE',
             heldBy: 0,
             position: [0, 0, 10]
@@ -101,6 +101,7 @@ function handleProjectileData(clientData) {
     });
 }
 function handleItemPickup(clientData) {
+    gameData.itemData.items[clientData.itemId].heldBy = clientData.senderId;
     wss.clients.forEach(function (client) {
         client.send(JSON.stringify(clientData));
     });
@@ -110,10 +111,10 @@ function handleKillConfirm(clientData) {
     gameData.pointAwardedTo = clientData.pointAwardedTo;
     connectedClients[clientData.pointAwardedTo].clientData.score += 1;
     var gameWinner = undefined;
-    if (gameData.scores.team1 >= 5) {
+    if (gameData.scores.team1 >= 10) {
         gameWinner = 'team1';
     }
-    if (gameData.scores.team2 >= 5) {
+    if (gameData.scores.team2 >= 10) {
         gameWinner = 'team2';
     }
     if (gameWinner !== undefined) {
@@ -152,6 +153,8 @@ function handleNewGame() {
     Object.keys(connectedClients).map(function (key) {
         connectedClients[key].score = 0;
     });
+    gameData.scores.team1 = 0;
+    gameData.scores.team2 = 0;
     var message = {
         action: 'START_NEW_GAME'
     };

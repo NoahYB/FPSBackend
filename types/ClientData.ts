@@ -19,6 +19,7 @@ export interface ClientData {
     score: number;
     connectionDisplayName: string;
     inTeamSelect: boolean;
+    itemId: string;
 }
 
 export interface NewGameMessage {
