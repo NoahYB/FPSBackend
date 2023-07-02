@@ -8,17 +8,24 @@ var itemData = {
     items: {
         1: {
             id: 1,
-            type: 'ROCKET',
+            type: 'RIFLE',
             state: 'INTERACTABLE',
             heldBy: 0,
-            position: [0, 0, 0]
+            position: { x: 0, y: 0, z: 0 }
         },
         2: {
             id: 2,
-            type: 'PISTOL',
+            type: 'RIFLE',
             state: 'INTERACTABLE',
             heldBy: 0,
-            position: [0, 0, 10]
+            position: { x: 10, y: 0, z: 10 }
+        },
+        3: {
+            id: 3,
+            type: 'ROCKET',
+            state: 'INTERACTABLE',
+            heldBy: 0,
+            position: { x: 21.075607996795043, y: 43.36202370887371, z: -14.331500908262825 }
         }
     }
 };
@@ -41,7 +48,7 @@ wss.on('connection', function connection(ws) {
         console.log('error', e);
     });
     ws.on('close', function (e) {
-        console.log('close', e);
+        console.log(e);
     });
     ws.send(JSON.stringify({
         senderId: 'WEBSOCKET_SERVER_GAME_INIT',
@@ -60,6 +67,9 @@ function receiveMessage(message) {
     }
     if (data.action === "CONFIRM_KILL") {
         handleKillConfirm(data);
+    }
+    if (data.action === "CLOSING") {
+        handleClose(data);
     }
     if (data.action === "TEAM_SELECT") {
         handleTeamSelect(data);
@@ -82,6 +92,28 @@ function receiveMessage(message) {
     if (data.action === "NAME_CHANGE") {
         handleNameChange(data);
     }
+}
+function handleClose(clientData) {
+    console.log(gameData);
+    Object.keys(gameData.itemData.items).forEach(function (key) {
+        var item = gameData.itemData.items[key];
+        var itemsDropped = [];
+        if (item.heldBy === (clientData.senderId)) {
+            item.heldBy = 0;
+            item.position = clientData.position;
+            itemsDropped.push(item);
+        }
+        wss.clients.forEach(function (client) {
+            client.send(JSON.stringify({
+                action: 'ITEM_DROP',
+                itemsDropped: itemsDropped
+            }));
+        });
+        wss.clients.forEach(function (client) {
+            client.send(JSON.stringify(clientData));
+        });
+    });
+    console.log(gameData.itemData.items);
 }
 function handleHit(clientData) {
     wss.clients.forEach(function (client) {
