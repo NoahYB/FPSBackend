@@ -83,45 +83,61 @@ function receiveMessage(message:string) {
                 }
         }
 
-        if (data.action === "CONFIRM_KILL") {
+        else if (data.action === "CONFIRM_KILL") {
                 handleKillConfirm(data);
         }
 
-        if (data.action === "CLOSING") {
+        else if (data.action === "CLOSING") {
                 handleClose(data);
         }
 
-        if (data.action === "TEAM_SELECT") {
+        else if (data.action === "TEAM_SELECT") {
                 handleTeamSelect(data);
         }
 
-        if (data.action === "SHOT") {
+        else if (data.action === "SHOT") {
                 handleShot(data);
         }
 
-        if (data.action === "PROJECTILE_DATA") {
+        else if (data.action === "PROJECTILE_DATA") {
                 handleProjectileData(data);
         }
 
-        if (data.action === "ITEM_PICKUP") {
+        else if (data.action === "ITEM_PICKUP") {
                 handleItemPickup(data);
         }
 
-        if (data.action === "MOVEMENT") {
+        else if (data.action === "MOVEMENT") {
                 handleMovementUpdate(data);
         }
 
-        if (data.action === "HIT") {
+        else if (data.action === "HIT") {
                 handleHit(data);
         }
-        if (data.action === "NAME_CHANGE") {
+
+        else if (data.action === "NAME_CHANGE") {
                 handleNameChange(data);
+        }
+
+        else if (data.action === "ITEM_DROP") {
+                handleItemDrop(data);
         }
 
 }
 
+function handleItemDrop(clientData: ClientData) {
+        const { itemsDropped } = clientData;
+        itemsDropped.forEach(item => {
+                gameData.itemData.items[item.id].heldBy = 0;
+                gameData.itemData.items[item.id].position = clientData.position;
+        });
+
+        wss.clients.forEach(client => {
+                client.send(JSON.stringify(clientData))
+        });
+}
+
 function handleClose(clientData: ClientData) {
-        console.log(gameData);
         Object.keys(gameData.itemData.items).forEach(key => {
 
                 const item = gameData.itemData.items[key];
@@ -145,7 +161,6 @@ function handleClose(clientData: ClientData) {
                         client.send(JSON.stringify(clientData))
                 });
         })
-        console.log(gameData.itemData.items);
 }
 
 function handleHit(clientData: ClientData) {

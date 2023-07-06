@@ -2,7 +2,18 @@
 import { Vector3, Quaternion } from 'three';
 
 export interface ClientData {
-    action: 'TEAM_SELECT' | 'MOVEMENT' | 'MOUSE' |'CONFIRM_KILL' | 'SHOT' | 'HIT' | 'NAME_CHANGE' | 'PROJECTILE_DATA' | 'ITEM_PICKUP' | 'CLOSING';
+    action: 
+        'TEAM_SELECT' |
+        'MOVEMENT' |
+        'MOUSE' |
+        'CONFIRM_KILL' |
+        'SHOT' |
+        'HIT' |
+        'NAME_CHANGE' |
+        'PROJECTILE_DATA' |
+        'ITEM_PICKUP' |
+        'CLOSING' |
+        'ITEM_DROP';
     mouseData: MouseEvent;
     connected: boolean;
     input: KeyboardEvent['key'];
@@ -20,6 +31,7 @@ export interface ClientData {
     connectionDisplayName: string;
     inTeamSelect: boolean;
     itemId: string;
+    itemsDropped: any[];
 }
 
 export interface NewGameMessage {
